@@ -47,7 +47,7 @@ function populateVoices(){
 }
 
 /* ===== TTS 控制 ===== */
-function buildText(e){return `${e.title}。${e.summary}。涉及主题：${e.tags.join('、')}。触发频率：${e.schedule}。`;}
+function buildText(e){return e.body?`${e.title}。${e.body}`:`${e.title}。${e.summary}。涉及主题：${e.tags.join('、')}。触发频率：${e.schedule}。`;}
 function startPlay(e){
   if(!('speechSynthesis' in window)){alert('当前浏览器不支持语音合成');return;}
   stopPlay();
