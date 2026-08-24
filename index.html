@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投研播客 · 元宝投研每日开车听</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <div class="logo">投</div>
+    <div>
+      <h1>投研播客</h1>
+      <p class="sub">元宝投研 · 每日开车听点硬核的</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <label class="switch">
+      <input type="checkbox" id="autoplay"><span class="slider"></span>
+      <span class="switch-label">连续播放</span>
+    </label>
+    <span class="updated">更新于 2026-08-24</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <h2>把你的 20 条元宝投研任务，变成每天通勤的播客节目单。</h2>
+    <p>AI 产业与算力 · 选股与投资策略 · 个股与赛道跟踪 —— 点击任一节目即可收听文字版（浏览器实时朗读，无需下载音频）。</p>
+  </div>
+  <div class="player-card" id="globalPlayer">
+    <div class="now-playing"><span class="dot"></span><span id="nowTitle">未播放</span></div>
+    <div class="controls">
+      <button id="btnPlay" title="播放/暂停">▶</button>
+      <button id="btnPrev" title="上一期">⏮</button>
+      <button id="btnNext" title="下一期">⏭</button>
+      <select id="voiceSel" title="发音人"></select>
+      <input type="range" id="rate" min="0.7" max="1.6" step="0.05" value="1" title="语速">
+    </div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+</section>
+
+<nav class="cat-nav" id="catNav"></nav>
+
+<main id="episodeList"></main>
+<section id="dailyBox" style="max-width:1100px;margin:0 auto;padding:0 28px;"></section>
+
+<footer class="site-footer">
+  <p>投研播客 · 内容由元宝定时任务产出，仅供研究参考，不构成投资建议。语音由浏览器 TTS 实时合成。</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
