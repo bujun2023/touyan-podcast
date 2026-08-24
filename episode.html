@@ -32,10 +32,15 @@ fetch('data/episodes.json').then(r=>r.json()).then(data=>{
   const e=data.episodes.find(x=>x.id===id);if(!e)return;const c=data.categories.find(x=>x.id===e.cat);
   $('#dCat').textContent=c.name;$('#dCat').style.background=c.color;
   $('#dTitle').textContent=e.title;$('#dMeta').textContent=e.schedule+' · '+e.tags.map(t=>'#'+t).join(' ');
-  $('#dBody').innerHTML='<p class="placeholder">📻 本期正文由元宝对应定时任务（'+e.task_title+'）产出后自动填充。当前为节目预告摘要。</p><p>'+e.summary+'</p><p class="placeholder">👉 后续把某天该任务的产出文字贴入 data/episodes.json 对应期的 body 字段，即可在此呈现完整可收听的正片内容。</p>';
+  const body=e.body||'';
+  if(body){
+    $('#dBody').innerHTML='<p style="white-space:pre-wrap;margin:0;">'+body.replace(/</g,'&lt;')+'</p>';
+  }else{
+    $('#dBody').innerHTML='<p class="placeholder">📻 本期正文待回填：对应定时任务（'+e.task_title+'）产出后，将由元宝自动填充真实正文。</p><p>'+e.summary+'</p>';
+  }
   populateVoices();if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=populateVoices;
   window.__ep=e;
-  const play=()=>{stop();utter=new SpeechSynthesisUtterance($('#dTitle').textContent+'。'+e.summary);const v=$('#voiceSel').value;if(v){const vv=speechSynthesis.getVoices().find(x=>x.voiceURI===v);if(vv)utter.voice=vv;}utter.rate=parseFloat($('#rate').value)||1;utter.lang='zh-CN';$('#nowTitle').textContent='正在播放：'+e.title;speechSynthesis.speak(utter);};
+  const play=()=>{stop();const text=body?($('#dTitle').textContent+'。'+body):($('#dTitle').textContent+'。'+e.summary);utter=new SpeechSynthesisUtterance(text);const v=$('#voiceSel').value;if(v){const vv=speechSynthesis.getVoices().find(x=>x.voiceURI===v);if(vv)utter.voice=vv;}utter.rate=parseFloat($('#rate').value)||1;utter.lang='zh-CN';$('#nowTitle').textContent='正在播放：'+e.title;speechSynthesis.speak(utter);};
   $('#btnPlay').onclick=play;$('#rate').oninput=()=>{if(utter)play();};
 }).catch(err=>$('#dBody').textContent='加载失败：'+err.message);
 function populateVoices(){const sel=$('#voiceSel');const vs=speechSynthesis.getVoices().filter(v=>/zh|Chinese|cmn/i.test(v.lang+''+v.name));sel.innerHTML='';if(!vs.length){sel.add(new Option('默认',''));return;}vs.forEach((v,i)=>sel.add(new Option(v.name||('发音人'+(i+1)),v.voiceURI)));}
