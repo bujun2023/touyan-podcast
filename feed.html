@@ -2,24 +2,25 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>每日信息流 · 投研播客</title>
+<title>专注阅读版 · 投研播客</title>
 <link rel="stylesheet" href="./styles.css">
 <style>
-.feed-group{margin:28px 0}.feed-group h2{font-size:1.15rem;color:var(--accent,#4f7cff);border-left:4px solid var(--accent,#4f7cff);padding-left:10px;margin:0 0 14px}
-.feed-item{border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#fff;scroll-margin-top:80px}
+.feed-group{margin:26px 0}.feed-group h2{font-size:1.12rem;color:var(--accent,#4f7cff);border-left:4px solid var(--accent,#4f7cff);padding-left:10px;margin:0 0 14px}
+.feed-item{border:1px solid #e5e7eb;border-radius:12px;padding:15px 17px;margin-bottom:13px;background:#fff;scroll-margin-top:82px;transition:box-shadow .2s}
 .feed-item.active{box-shadow:0 0 0 3px #c7d6ff;border-color:#8fb0ff}
-.feed-item .t{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.feed-item h3{font-size:1.02rem;margin:0;flex:1}
+.feed-item .t{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.feed-item h3{font-size:1.0rem;margin:0;flex:1}
 .tag{font-size:.72rem;background:#eef2ff;color:#4158b0;border-radius:99px;padding:2px 9px}
-.freq{font-size:.75rem;color:#9aa4b2}
-.body{margin-top:10px;color:#33404f;line-height:1.75;font-size:.94rem;white-space:pre-line}
-.note{font-size:.78rem;color:#9aa4b0;margin-top:8px}
+.freq{font-size:.74rem;color:#9aa4b2}
+.body{margin-top:9px;color:#33404f;line-height:1.75;font-size:.93rem;white-space:pre-line}
+.note{font-size:.76rem;color:#9aa4b0;margin-top:8px}
+.back{display:inline-block;margin-top:6px;color:#4158b0;text-decoration:none;font-size:.9rem}
 </style>
 </head>
 <body>
 <header class="hero"><div class="wrap">
-  <h1>📡 投研播客 · 每日信息流</h1>
-  <p class="sub">20 条元宝投研任务 · 按主题连续排列 · 点一下从头听到尾</p>
+  <h1>📖 投研播客 · 专注阅读版</h1>
+  <p class="sub">同一份每日信息流，更适合静心阅读/打印。点「▶ 播放全部」可连播朗读。</p>
   <div class="player" id="player">
     <button id="playAll" class="big">▶ 播放全部</button>
     <button id="pauseBtn">⏸ 暂停</button>
@@ -27,8 +28,7 @@
     <span id="now" class="now">就绪</span>
     <div class="bar"><div id="barfill"></div></div>
   </div>
-  <p class="hint">提示：信息流按"AI 产业 → 选股策略 → 个股赛道"三大主题纵向排布，播放器自动逐期朗读并滚屏高亮。</p>
-  <p><a class="back" href="./index.html">← 返回首页</a></p>
+  <p><a class="back" href="./index.html">← 返回首页（信息流）</a></p>
 </div></header>
 <main class="wrap" id="feed"></main>
 <footer class="foot"><div class="wrap">投研播客 · 数据来自公开信息，仅供研究参考，不构成投资建议。</div></footer>
@@ -39,47 +39,49 @@ const GROUPS = [
   {key:'select', title:'📈 选股与投资策略', items:EPISODES.filter(e=>e.group==='select')},
   {key:'track',  title:'🔍 个股与赛道跟踪', items:EPISODES.filter(e=>e.group==='track')},
 ];
-const feed=document.getElementById('feed');
-let html='';
+const feed = document.getElementById('feed');
+let html = '';
 GROUPS.forEach(g=>{
   if(!g.items.length) return;
-  html+=`<section class="feed-group"><h2>${g.title}</h2>`;
+  html += `<section class="feed-group"><h2>${g.title}</h2>`;
   g.items.forEach((ep,idx)=>{
-    const no=String(idx+1).padStart(2,'0');
-    html+=`<article class="feed-item" data-id="${ep.id}" id="ep-${ep.id}">
+    const no = String(idx+1).padStart(2,'0');
+    html += `<article class="feed-item" id="ep-${ep.id}">
       <div class="t"><h3>${no}. ${ep.title}</h3><span class="tag">${ep.tag||''}</span><span class="freq">${ep.freq||''}</span></div>
       <div class="body">${ep.body||'（本期待产出）'}</div>
       <div class="note">来源：${ep.source||'公开信息'} · ${ep.date||''}</div>
     </article>`;
   });
-  html+=`</section>`;
+  html += `</section>`;
 });
-feed.innerHTML=html || '<p>暂无节目数据。</p>';
+feed.innerHTML = html || '<p>暂无节目数据。</p>';
 
-// ---- 播放器（连续朗读 + 滚屏高亮）----
 const playBtn=document.getElementById('playAll'), pauseBtn=document.getElementById('pauseBtn');
 const nextBtn=document.getElementById('nextBtn'), nowEl=document.getElementById('now'), bar=document.getElementById('barfill');
 const items=Array.from(feed.querySelectorAll('.feed-item'));
-let cur=0, speaking=false, paused=false, utter=null;
+let cur=0, paused=false;
 function setActive(i){items.forEach((el,n)=>el.classList.toggle('active',n===i));}
 function scrollTo(i){const el=items[i];if(el){el.scrollIntoView({behavior:'smooth',block:'center'});}}
 function speak(text){return new Promise(res=>{
   if(!('speechSynthesis' in window)){nowEl.textContent='当前浏览器不支持朗读';return res();}
   window.speechSynthesis.cancel();
-  utter=new SpeechSynthesisUtterance(text);utter.lang='zh-CN';utter.rate=1.0;
-  utter.onend=()=>res();utter.onerror=()=>res();
-  window.speechSynthesis.speak(utter);
+  const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=1.0;
+  u.onend=()=>res();u.onerror=()=>res();
+  window.speechSynthesis.speak(u);
 });}
 async function playFrom(i){
   if(i>=items.length){nowEl.textContent='全部播放完毕 🎉';bar.style.width='100%';return;}
-  cur=i;paused=false;speaking=true;setActive(i);scrollTo(i);
-  const ep=EPISODES.flatMap((_,gi)=>[]).concat(...GROUPS.map(g=>g.items))[i];
-  const text=(ep?ep.title+'。':'')+(ep?'\n\n'+(ep.body||''):'');
-  nowEl.textContent=`正在朗读 ${i+1}/${items.length} · ${ep?ep.title:''}`;bar.style.width=(i/items.length*100).toFixed(0)+'%';
+  cur=i;paused=false;setActive(i);scrollTo(i);
+  const ep=GROUPS.flatMap(g=>g.items)[i];
+  const text=(ep?ep.title+'。':'')+(ep?'
+
+'+(ep.body||''):'');
+  nowEl.textContent=`正在朗读 ${i+1}/${items.length} · ${ep?ep.title:''}`;
+  bar.style.width=(i/items.length*100).toFixed(0)+'%';
   await speak(text);if(!paused) playFrom(i+1);
 }
 playBtn.onclick=()=>playFrom(0);
-pauseBtn.onclick=()=>{if(!window.speechSynthesis)return;if(paused){paused=false;window.speechSynthesis.resume();nowEl.textContent=nowEl.textContent.replace('已暂停','继续中');}else{paused=true;window.speechSynthesis.pause();nowEl.textContent+='（已暂停）';}};
+pauseBtn.onclick=()=>{if(!window.speechSynthesis)return;if(paused){paused=false;window.speechSynthesis.resume();nowEl.textContent=nowEl.textContent.replace('（已暂停）','');}else{paused=true;window.speechSynthesis.pause();nowEl.textContent+='（已暂停）';}};
 nextBtn.onclick=()=>{window.speechSynthesis.cancel();if(cur<items.length-1)playFrom(cur+1);};
 </script>
 </body></html>
